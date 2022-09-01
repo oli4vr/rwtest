@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -6,11 +7,10 @@
 
 #define MAX_BLOCKS 2097152
 #define GROUP_READ 16384
-#define STAT_MASK 8388607
-#define STAT_MAX 8388608
+#define MAX_BUFF 8388608
 int64_t timebuf[MAX_BLOCKS];
 int64_t min_time,max_time;
-unsigned char data[STAT_MAX];
+unsigned char data[MAX_BUFF];
 
 
 int64_t getusecs() {
@@ -96,6 +96,8 @@ int main(int argc,char ** argv) {
  while (1) {
   cbuf=timebuf;
   fp=fopen(argv[1],"r");
+  if (fp==NULL)
+	  exit(4);
   for(n=0;n<GROUP_READ;n++) {
 
    stime=getusecs();
@@ -124,7 +126,7 @@ int main(int argc,char ** argv) {
    if (timebuf[m]<loval) less++;
    if (timebuf[m]>hival) more++;
   }
-  printf("%02d:%02d:%02d tMIN=%9.01f µs     tAVG=%9.01f µs     tMAX=%9.01f µs           #<%9.01f µs= %06d    #>%9.01f µs= %06d\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more);
+  printf("%02d:%02d:%02d tMIN=%9.01f us     tAVG=%9.01f us     tMAX=%9.01f us           #<%9.01f us= %06d    #>%9.01f us= %06d\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more);
  }
 
  return 0;
