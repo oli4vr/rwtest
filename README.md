@@ -1,6 +1,6 @@
 # rwtest <br />
-Build with : <br />
-make     -> Build linux executables <br />
+Build : <br />
+ make<br />
 <br />
 Sequential Read Write IO test<br />
 <p>Initially created to test the impact of network share failover scenarios on active read processes.
