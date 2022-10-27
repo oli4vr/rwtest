@@ -1,6 +1,4 @@
 # rwtest <br />
-By Olivier Van Rompuy <br />
-<br />
 Build with : <br />
 make     -> Build linux executables <br />
 <br />
