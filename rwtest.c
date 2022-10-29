@@ -11,6 +11,7 @@ int64_t timebuf[MAX_BLOCKS];
 int64_t min_time,max_time;
 unsigned char data[MAX_BUFF];
 
+// Return timestamp in microseconds
 int64_t getusecs() {
  int64_t tmp;
  struct timeval tv;
@@ -56,6 +57,7 @@ int main(int argc,char ** argv) {
  argc--;
  argv++;
 
+// Help text (-h)
  if (strcmp(argv[0],"-h")==0) {
   printf("\nSyntax :\n");
   printf("  rwtest -h\n    ||\n");
@@ -69,6 +71,7 @@ int main(int argc,char ** argv) {
   return -1;
  }
 
+// Process command line parameters
  for(;argc>0;argc--) {
   if (argv[0][0]=='-') {
    if (argc<2) { printf("Error : Missing parameter value for %s\n",argv[0]); exit(-1);}
@@ -213,6 +216,7 @@ int main(int argc,char ** argv) {
   time(&now);
   local=localtime(&now);
 
+// Process statistics
   min_time=1000000000;max_time=0;sum_time=0;
   for(m=0;m<end;m++) {
    sum_time+=timebuf[m];
