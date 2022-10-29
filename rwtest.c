@@ -158,6 +158,7 @@ int main(int argc,char ** argv) {
   time(&now);
   local=localtime(&now);
 
+// Process statistics
   min_time=1000000000;max_time=0;sum_time=0;
   for(m=0;m<end;m++) {
    sum_time+=timebuf[m];
