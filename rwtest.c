@@ -62,7 +62,7 @@ int main(int argc,char ** argv) {
   printf("\nSyntax :\n");
   printf("  rwtest -h\n    ||\n");
   printf("  rwtest [-f Filename] [-w WriteIterations] [-r ReadIterations] [-b KB_blocksize] [-n #Blocks]\n");
-  printf("\nTimes are measures in microseconds except the Total_Time\n");
+  printf("\nTimes are measured in microseconds except the Total_Time\n");
   printf("\nDefaults :\n");
   printf("  WriteIterations   = 1\n");
   printf("  ReadIterations    = 16\n");
