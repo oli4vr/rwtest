@@ -11,7 +11,6 @@ int64_t timebuf[MAX_BLOCKS];
 int64_t min_time,max_time;
 unsigned char data[MAX_BUFF];
 
-
 int64_t getusecs() {
  int64_t tmp;
  struct timeval tv;
@@ -22,25 +21,17 @@ int64_t getusecs() {
  return tmp;
 }
 
-
 int main(int argc,char ** argv) {
-
  int64_t BS,PL;
  FILE * fp;
-
  int64_t *cbuf;
-
  int64_t stime;
  int64_t etime;
  int64_t tstime;
  int64_t tetime;
-
  time_t now;
-
  char *fname;
  char deff[]="rwtest.data";
-
-
  int n,m,o,end,fails,rc,ir,iw,ii;
  int linenr=0;
  float sum_time=0;
@@ -50,7 +41,6 @@ int main(int argc,char ** argv) {
  float maxt,mint;
  float otime,ctime,ttime;
  int more,less;
-
  struct tm *local;
 
  printf("Sequential IO Read Write Test\n");
@@ -118,7 +108,6 @@ int main(int argc,char ** argv) {
    }
    argv++;
   }
-
  }
  }
 
