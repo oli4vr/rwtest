@@ -1,9 +1,18 @@
-#define _GNU_SOURCE
+/* rwtest.c
+ * Olivier Van Rompuy
+ *
+ * Read/Write benchmarking aimed at detecting drops in IO
+ * and measuring the impact of short device or network share inavailabilities.
+ * It was originally written to test the impact of cifs/nfs HA failovers
+ * on the connect clients.
+ *
+ * */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <inttypes.h>
 #include <time.h>
+#include <string.h>
 
 #define MAX_BLOCKS 2097152
 #define MAX_BUFF 8388608
@@ -33,7 +42,7 @@ int main(int argc,char ** argv) {
  time_t now;
  char *fname;
  char deff[]="rwtest.data";
- int n,m,o,end,fails,rc,ir,iw,ii;
+ int n,m,o,end,fails,reads,writes,rc,ir,iw,ii;
  int linenr=0;
  float sum_time=0;
  float avg_time=0,avg_bw=0,avg_iops=0;
@@ -126,7 +135,7 @@ int main(int argc,char ** argv) {
  for (ii=0;ii<iw;ii++)
  {
   if (linenr==0)
-    printf("\nW TIME        Tmin      Tavg        Tmax          <      #           >      #  Fails     Topen    Tclose   TotTimeMS      IOPS      MBps\n");
+    printf("\nW TIME        Tmin      Tavg        Tmax          <      #           >      #  Writes    Topen    Tclose   TotTimeMS      IOPS      MBps\n");
 
   cbuf=timebuf;
 
@@ -140,11 +149,13 @@ int main(int argc,char ** argv) {
   otime=etime-stime;
   if (fp==NULL)
           exit(4);
-  for(n=0;n<end;n++) {
-
+  rc=1;
+  writes=0;
+  for(n=0;n<end && rc>0;n++) {
    stime=getusecs();
    rc=fwrite(data,BS,1,fp);
    fails+=(rc<1);
+   writes+=(rc>0);
    etime=getusecs();
    *cbuf=etime-stime;
    cbuf++;
@@ -161,25 +172,25 @@ int main(int argc,char ** argv) {
 
 // Process statistics
   min_time=1000000000;max_time=0;sum_time=0;
-  for(m=0;m<end;m++) {
+  for(m=0;m<writes;m++) {
    sum_time+=timebuf[m];
    if (timebuf[m]<min_time && timebuf[m]!=0) min_time=timebuf[m];
    if (timebuf[m]>max_time) max_time=timebuf[m];
   }
-  avg_time=sum_time/end;
+  avg_time=sum_time/writes;
 
   maxt=max_time;mint=min_time;
   hival=(maxt+(avg_time*7))/8;
   loval=(mint+(avg_time*7))/8;
   more=0;less=0;
-  for(m=0;m<end;m++) {
+  for(m=0;m<writes;m++) {
    if (timebuf[m]<loval) less++;
    if (timebuf[m]>hival) more++;
   }
   fbuf=(BS>>10);
   avg_bw=(fbuf*1000000/avg_time)/1024;
-  fbuf=end;
-  printf("%02d:%02d:%02d %9.0f %9.0f %11.0f  %9.0f %6d %11.0f %6d %6d %9.0f %9.0f %11.0f %9.0f %9.0f\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more,fails,otime,ctime,ttime/1000,fbuf*1000000/ttime,avg_bw);
+  fbuf=writes;
+  printf("%02d:%02d:%02d %9.0f %9.0f %11.0f  %9.0f %6d %11.0f %6d %6d %9.0f %9.0f %11.0f %9.0f %9.0f\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more,writes,otime,ctime,ttime/1000,fbuf*1000000/ttime,avg_bw);
   linenr=(linenr+1)&15;
  }
 
@@ -189,7 +200,7 @@ int main(int argc,char ** argv) {
  printf("\n\nSequential Read Phase:\n");
  for (ii=0;ii<ir;ii++) {
   if (linenr==0)
-	  printf("\nR TIME        Tmin      Tavg        Tmax          <      #           >      #  Fails     Topen    Tclose   TotTimeMS      IOPS      MBps\n");
+	  printf("\nR TIME        Tmin      Tavg        Tmax          <      #           >      #  Reads     Topen    Tclose   TotTimeMS      IOPS      MBps\n");
   cbuf=timebuf;
   fails=0;
   tstime=getusecs();
@@ -199,11 +210,13 @@ int main(int argc,char ** argv) {
   otime=etime-stime;
   if (fp==NULL)
 	  exit(4);
-  for(n=0;n<end;n++) {
-
+  rc=1;
+  reads=0;
+  for(n=0;n<end && rc>0;n++) {
    stime=getusecs();
    rc=fread(data,BS,1,fp);
    fails+=(rc<1);
+   reads+=(rc>0);
    etime=getusecs();
    *cbuf=etime-stime;
    cbuf++;
@@ -220,27 +233,26 @@ int main(int argc,char ** argv) {
 
 // Process statistics
   min_time=1000000000;max_time=0;sum_time=0;
-  for(m=0;m<end;m++) {
+  for(m=0;m<reads;m++) {
    sum_time+=timebuf[m];
    if (timebuf[m]<min_time && timebuf[m]!=0) min_time=timebuf[m];
    if (timebuf[m]>max_time) max_time=timebuf[m];
   }
-  avg_time=sum_time/end;
+  avg_time=sum_time/reads;
   maxt=max_time;mint=min_time;
   hival=(maxt+(avg_time*7))/8;
   loval=(mint+(avg_time*7))/8;
   more=0;less=0;
-  for(m=0;m<end;m++) {
+  for(m=0;m<reads;m++) {
    if (timebuf[m]<loval) less++;
    if (timebuf[m]>hival) more++;
   }
   fbuf=(BS>>10);
   avg_bw=(fbuf*1000000/avg_time)/1024;
-  fbuf=end;
-  printf("%02d:%02d:%02d %9.0f %9.0f %11.0f  %9.0f %6d %11.0f %6d %6d %9.0f %9.0f %11.0f %9.0f %9.0f\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more,fails,otime,ctime,ttime/1000,fbuf*1000000/ttime,avg_bw);
+  fbuf=reads;
+  printf("%02d:%02d:%02d %9.0f %9.0f %11.0f  %9.0f %6d %11.0f %6d %6d %9.0f %9.0f %11.0f %9.0f %9.0f\n",local->tm_hour,local->tm_min,local->tm_sec,mint,avg_time,maxt,loval,less,hival,more,reads,otime,ctime,ttime/1000,fbuf*1000000/ttime,avg_bw);
   linenr=(linenr+1)&15;
  }
-
 
  return 0;
 }
